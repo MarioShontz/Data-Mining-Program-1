@@ -87,10 +87,14 @@ class Section1:
         self,
     ):
         X, y, Xtest, ytest = u.prepare_data()
+        print(X.shape, y.shape, Xtest.shape, ytest.shape)
         Xtrain, ytrain = u.filter_out_7_9s(X, y)
         Xtest, ytest = u.filter_out_7_9s(Xtest, ytest)
+        print(Xtrain.shape, ytrain.shape, Xtest.shape, ytest.shape)
         Xtrain = nu.scale_data(Xtrain)
         Xtest = nu.scale_data(Xtest)
+        ytrain = ytrain.astype(int)
+        ytest = ytest.astype(int)
 
         answer = {}
 

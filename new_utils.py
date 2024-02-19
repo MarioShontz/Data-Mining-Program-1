@@ -1,3 +1,4 @@
+import numpy as np
 """
    Use to create your own functions for reuse 
    across the assignment
@@ -10,3 +11,11 @@
   
      import new_utils as nu
 """
+def scale_data(data):
+    """
+    ensure every element is a float and normalize points to be between 0 and 1
+    """
+    data = data.astype(float)
+    data = data / 255.0
+    scaled_correctly = np.all((data >= 0) & (data <= 1))
+    return data, scaled_correctly
