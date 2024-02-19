@@ -87,7 +87,6 @@ class Section1:
         self,
     ):
         X, y, Xtest, ytest = u.prepare_data()
-        print(X.shape, y.shape, Xtest.shape, ytest.shape)
         Xtrain, ytrain = u.filter_out_7_9s(X, y)
         Xtest, ytest = u.filter_out_7_9s(Xtest, ytest)
         print(Xtrain.shape, ytrain.shape, Xtest.shape, ytest.shape)
@@ -100,12 +99,12 @@ class Section1:
 
         # Enter your code and fill the `answer` dictionary
 
-        answer["length_Xtrain"] = None  # Number of samples
-        answer["length_Xtest"] = None
-        answer["length_ytrain"] = None
-        answer["length_ytest"] = None
-        answer["max_Xtrain"] = None
-        answer["max_Xtest"] = None
+        answer["length_Xtrain"] = Xtrain.shape[0]  # Number of samples
+        answer["length_Xtest"] = Xtest.shape[0] 
+        answer["length_ytrain"] = ytrain.shape[0]
+        answer["length_ytest"] = ytest.shape[0]
+        answer["max_Xtrain"] = Xtrain.max()
+        answer["max_Xtest"] = Xtest.max()
         return answer, Xtrain, ytrain, Xtest, ytest
 
     """
@@ -123,13 +122,13 @@ class Section1:
         y: NDArray[np.int32],
     ):
         # Enter your code and fill the `answer` dictionary
-
         answer = {}
-        answer["clf"] = None  # the estimator (classifier instance)
-        answer["cv"] = None  # the cross validator instance
+        answer["clf"] = DecisionTreeClassifier(random_state=0)  # the estimator (classifier instance)
+        answer["cv"] = KFold(n_splits=5, random_state=0, shuffle=True)  # the cross validator instance
         # the dictionary with the scores  (a dictionary with
         # keys: 'mean_fit_time', 'std_fit_time', 'mean_accuracy', 'std_accuracy'.
-        answer["scores"] = None
+        answer["scores"] = u.train_simple_classifier_with_cv(X, y, answer["clf"], answer["cv"])
+        print(answer["scores"])
         return answer
 
     # ---------------------------------------------------------

@@ -17,5 +17,4 @@ def scale_data(data):
     """
     data = data.astype(float)
     data = data / 255.0
-    scaled_correctly = np.all((data >= 0) & (data <= 1))
-    return data, scaled_correctly
+    return data
