@@ -13,13 +13,12 @@ from sklearn.model_selection import (
 
 def load_mnist_dataset(
     nb_samples=None,
-) -> tuple[NDArray[np.floating], NDArray[np.int32]]:
+)-> tuple[NDArray[np.floating], NDArray[np.int32]]:
     """
     Load the MNIST dataset.
 
     nb_samples: number of samples to save. Useful for code testing.
-    The homework requires you to use the full dataset.
-
+    The homework requires you to use the full dataset
     Returns:
         X, y
         #X_train, y_train, X_test, y_test

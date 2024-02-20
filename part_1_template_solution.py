@@ -68,6 +68,7 @@ class Section1:
 
     def partA(self):
         # Return 0 (ran ok) or -1 (did not run ok)
+        print("Part A: Starter code\n")
         answer = u.starter_code()
         return answer
 
@@ -86,12 +87,15 @@ class Section1:
     def partB(
         self,
     ):
+        print("Part B: Load and prepare the mnist dataset\n")
         X, y, Xtest, ytest = u.prepare_data()
         Xtrain, ytrain = u.filter_out_7_9s(X, y)
         Xtest, ytest = u.filter_out_7_9s(Xtest, ytest)
         print(Xtrain.shape, ytrain.shape, Xtest.shape, ytest.shape)
         Xtrain = nu.scale_data(Xtrain)
         Xtest = nu.scale_data(Xtest)
+        Xtrain = Xtrain.astype(float)
+        Xtest = Xtest.astype(float)
         ytrain = ytrain.astype(int)
         ytest = ytest.astype(int)
 
@@ -121,13 +125,14 @@ class Section1:
         X: NDArray[np.floating],
         y: NDArray[np.int32],
     ):
+        print("Part C: Train your first classifier using k-fold cross validation\n")
         # Enter your code and fill the `answer` dictionary
         answer = {}
-        answer["clf"] = DecisionTreeClassifier(random_state=0)  # the estimator (classifier instance)
-        answer["cv"] = KFold(n_splits=5, random_state=0, shuffle=True)  # the cross validator instance
+        answer["clf"] = DecisionTreeClassifier(random_state=16)  # the estimator (classifier instance)
+        answer["cv"] = KFold(n_splits=5, random_state=16, shuffle=True)  # the cross validator instance
         # the dictionary with the scores  (a dictionary with
         # keys: 'mean_fit_time', 'std_fit_time', 'mean_accuracy', 'std_accuracy'.
-        answer["scores"] = u.train_simple_classifier_with_cv(X, y, answer["clf"], answer["cv"])
+        answer["scores"] = u.train_simple_classifier_with_cv(Xtrain=X,ytrain= y,clf= answer["clf"], cv=answer["cv"])
         print(answer["scores"])
         return answer
 
@@ -142,15 +147,20 @@ class Section1:
         X: NDArray[np.floating],
         y: NDArray[np.int32],
     ):
+        print("Part D: Repeat Part C with a random permutation (Shuffle-Split) 𝑘-fold cross-validator\n")
         # Enter your code and fill the `answer` dictionary
 
         # Answer: same structure as partC, except for the key 'explain_kfold_vs_shuffle_split'
 
         answer = {}
-        answer["clf"] = None
-        answer["cv"] = None
-        answer["scores"] = None
-        answer["explain_kfold_vs_shuffle_split"] = None
+        answer["clf"] = DecisionTreeClassifier(random_state=16)
+        answer["cv"] = ShuffleSplit(n_splits=5, random_state=16)
+        answer["scores"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer["clf"], cv=answer["cv"])
+        print(answer["scores"])
+        answer["explain_kfold_vs_shuffle_split"] = "k-fold segments the whole dataset, using each segment as the \
+            test set exactly once. It doesn't scale well with large datasets however, which is where shuffle-split \
+            comes in. It randomly subsets the data by set amounts, and is more efficient for large datasets. \
+            of course, the cost is that it is less comprehensive than k-fold."
         return answer
 
     # ----------------------------------------------------------------------
@@ -165,12 +175,23 @@ class Section1:
         X: NDArray[np.floating],
         y: NDArray[np.int32],
     ):
+        print("Part E: Repeat part D for 𝑘=2,5,8,16\n")
         # Answer: built on the structure of partC
         # `answer` is a dictionary with keys set to each split, in this case: 2, 5, 8, 16
         # Therefore, `answer[k]` is a dictionary with keys: 'scores', 'cv', 'clf`
 
         answer = {}
+        answer[2] = {}
+        answer[5] = {}
+        answer[8] = {}
+        answer[16] = {}
 
+        for k in [2, 5, 8, 16]:
+            answer[k]["clf"] = DecisionTreeClassifier(random_state=16)
+            answer[k]["cv"] = ShuffleSplit(n_splits=k, random_state=16)
+            answer[k]["scores"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer[k]["clf"], cv=answer[k]["cv"])
+        print(answer[k]["scores"]["mean_accuracy"])
+        print(answer[k]["scores"]["std_accuracy"])
         # Enter your code, construct the `answer` dictionary, and return it.
 
         return answer
@@ -195,11 +216,21 @@ class Section1:
         X: NDArray[np.floating],
         y: NDArray[np.int32],
     ) -> dict[str, Any]:
-        """ """
+        print("Part F: Repeat part D with a Random-Forest classifier with default parameters\n")
 
         answer = {}
 
         # Enter your code, construct the `answer` dictionary, and return it.
+        answer["clf_RF"] = RandomForestClassifier(random_state=16)
+        answer["clf_DT"] = DecisionTreeClassifier(random_state=16)
+        answer["cv"] = ShuffleSplit(n_splits=5, random_state=16)
+        answer["scores_RF"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer["clf_RF"], cv=answer["cv"])
+        answer["scores_DT"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer["clf_DT"], cv=answer["cv"])
+        print(answer["scores_RF"])
+        print(answer["scores_DT"])
+        answer["model_highest_accuracy"] = "RF"
+        answer["model_lowest_variance"] = "DT"
+        answer["model_fastest"] = "DT"
 
         """
          Answer is a dictionary with the following keys: 
@@ -255,6 +286,7 @@ class Section1:
         Note:
         This function is not fully implemented yet.
         """
+        print("Part G: Modify hyperparameters and train on all training data\n")
 
         # refit=True: fit with the best parameters when complete
         # A test should look at best_index_, best_score_ and best_params_
