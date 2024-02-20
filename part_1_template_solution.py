@@ -193,7 +193,6 @@ class Section1:
             print(f"Scores for k={k}")
             u.print_cv_result_dict({"test_score": answer[k]["scores"]["test_score"]})
         # Enter your code, construct the `answer` dictionary, and return it.
-
         return answer
 
     # ----------------------------------------------------------------------
@@ -226,8 +225,8 @@ class Section1:
         answer["cv"] = ShuffleSplit(n_splits=5, random_state=16)
         answer["scores_RF"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer["clf_RF"], cv=answer["cv"])
         answer["scores_DT"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer["clf_DT"], cv=answer["cv"])
-        print(answer["scores_RF"])
-        print(answer["scores_DT"])
+        u.print_cv_result_dict(answer["scores_RF"])
+        u.print_cv_result_dict(answer["scores_DT"])
         answer["model_highest_accuracy"] = "RF"
         answer["model_lowest_variance"] = "DT"
         answer["model_fastest"] = "DT"
