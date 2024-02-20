@@ -133,7 +133,7 @@ class Section1:
         # the dictionary with the scores  (a dictionary with
         # keys: 'mean_fit_time', 'std_fit_time', 'mean_accuracy', 'std_accuracy'.
         answer["scores"] = u.train_simple_classifier_with_cv(Xtrain=X,ytrain= y,clf= answer["clf"], cv=answer["cv"])
-        print(answer["scores"])
+        u.print_cv_result_dict(answer["scores"])
         return answer
 
     # ---------------------------------------------------------
@@ -156,7 +156,7 @@ class Section1:
         answer["clf"] = DecisionTreeClassifier(random_state=16)
         answer["cv"] = ShuffleSplit(n_splits=5, random_state=16)
         answer["scores"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer["clf"], cv=answer["cv"])
-        print(answer["scores"])
+        u.print_cv_result_dict(answer["scores"])
         answer["explain_kfold_vs_shuffle_split"] = "k-fold segments the whole dataset, using each segment as the \
             test set exactly once. It doesn't scale well with large datasets however, which is where shuffle-split \
             comes in. It randomly subsets the data by set amounts, and is more efficient for large datasets. \
@@ -190,8 +190,8 @@ class Section1:
             answer[k]["clf"] = DecisionTreeClassifier(random_state=16)
             answer[k]["cv"] = ShuffleSplit(n_splits=k, random_state=16)
             answer[k]["scores"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer[k]["clf"], cv=answer[k]["cv"])
-        print(answer[k]["scores"]["mean_accuracy"])
-        print(answer[k]["scores"]["std_accuracy"])
+            print(f"Scores for k={k}")
+            u.print_cv_result_dict({"test_score": answer[k]["scores"]["test_score"]})
         # Enter your code, construct the `answer` dictionary, and return it.
 
         return answer
@@ -221,7 +221,7 @@ class Section1:
         answer = {}
 
         # Enter your code, construct the `answer` dictionary, and return it.
-        answer["clf_RF"] = RandomForestClassifier(random_state=16)
+        answer["clf_RF"] = RandomForestClassifier(random_state=24)
         answer["clf_DT"] = DecisionTreeClassifier(random_state=16)
         answer["cv"] = ShuffleSplit(n_splits=5, random_state=16)
         answer["scores_RF"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer["clf_RF"], cv=answer["cv"])
