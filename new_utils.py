@@ -1,4 +1,5 @@
 import numpy as np
+
 """
    Use to create your own functions for reuse 
    across the assignment
@@ -11,6 +12,8 @@ import numpy as np
   
      import new_utils as nu
 """
+
+
 def scale_data(data):
     """
     ensure every element is a float and normalize points to be between 0 and 1

@@ -13,7 +13,7 @@ from sklearn.model_selection import (
 
 def load_mnist_dataset(
     nb_samples=None,
-)-> tuple[NDArray[np.floating], NDArray[np.int32]]:
+) -> tuple[NDArray[np.floating], NDArray[np.int32]]:
     """
     Load the MNIST dataset.
 
@@ -130,8 +130,10 @@ def starter_code():
         Xtrain, ytrain = filter_out_7_9s(Xtrain, ytrain)
         Xtest, ytest = filter_out_7_9s(Xtest, ytest)
         out_dict = train_simple_classifier_with_cv(
-            Xtrain=Xtrain, ytrain=ytrain, clf=DecisionTreeClassifier(),
-            cv=KFold(n_splits=3)
+            Xtrain=Xtrain,
+            ytrain=ytrain,
+            clf=DecisionTreeClassifier(),
+            cv=KFold(n_splits=3),
         )
         print_cv_result_dict(out_dict)
         return 0

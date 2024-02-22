@@ -95,10 +95,8 @@ class Section1:
         print(Xtrain.shape, ytrain.shape, Xtest.shape, ytest.shape)
         Xtrain = nu.scale_data(Xtrain)
         Xtest = nu.scale_data(Xtest)
-
         Xtrain = Xtrain.astype(float)
         Xtest = Xtest.astype(float)
-        
         ytrain = ytrain.astype(int)
         ytest = ytest.astype(int)
 
@@ -106,12 +104,13 @@ class Section1:
 
         # Enter your code and fill the `answer` dictionary
 
-        answer["length_Xtrain"] = Xtrain.shape[0]  # Number of samples
-        answer["length_Xtest"] = Xtest.shape[0] 
-        answer["length_ytrain"] = ytrain.shape[0]
-        answer["length_ytest"] = ytest.shape[0]
-        answer["max_Xtrain"] = Xtrain.max()
-        answer["max_Xtest"] = Xtest.max()
+        answer["length_Xtrain"] = len(Xtrain)  # Number of samples
+        answer["length_Xtest"] = len(Xtest)
+        answer["length_ytrain"] = len(ytrain)  # Number of samples
+        answer["length_ytest"] = len(ytest)
+        answer["max_Xtrain"] = np.max(Xtrain)  # Maximum value of Xtrain
+        answer["max_Xtest"] = np.max(Xtest)  # Maximum value of Xtest
+        print(f"{answer=}")
         return answer, Xtrain, ytrain, Xtest, ytest
 
     """
@@ -129,14 +128,28 @@ class Section1:
         y: NDArray[np.int32],
     ):
         print("Part C: Train your first classifier using k-fold cross validation\n")
+
         # Enter your code and fill the `answer` dictionary
         answer = {}
-        answer["clf"] = DecisionTreeClassifier(random_state=16)  # the estimator (classifier instance)
-        answer["cv"] = KFold(n_splits=5, random_state=16, shuffle=True)  # the cross validator instance
+
+        answer["clf"] = DecisionTreeClassifier(
+            random_state=self.seed
+        )  # the estimator (classifier instance)
+
+        answer["cv"] = KFold(
+            n_splits=5, random_state=self.seed, shuffle=True
+        )  # the cross validator instance
         # the dictionary with the scores  (a dictionary with
         # keys: 'mean_fit_time', 'std_fit_time', 'mean_accuracy', 'std_accuracy'.
-        answer["scores"] = u.train_simple_classifier_with_cv(Xtrain=X,ytrain= y,clf= answer["clf"], cv=answer["cv"])
-        u.print_cv_result_dict(answer["scores"])
+        scores = u.train_simple_classifier_with_cv(
+            Xtrain=X, ytrain=y, clf=answer["clf"], cv=answer["cv"]
+        )
+        answer["scores"] = {
+            "mean_fit_time": scores["test_score"].mean(),
+            "std_fit_time": scores["test_score"].std(),
+            "mean_accuracy": scores["test_score"].mean(),
+            "std_accuracy": scores["test_score"].std(),
+        }
         return answer
 
     # ---------------------------------------------------------
@@ -150,17 +163,29 @@ class Section1:
         X: NDArray[np.floating],
         y: NDArray[np.int32],
     ):
-        print("Part D: Repeat Part C with a random permutation (Shuffle-Split) 𝑘-fold cross-validator\n")
+        print(
+            "Part D: Repeat Part C with a random permutation (Shuffle-Split) 𝑘-fold cross-validator\n"
+        )
         # Enter your code and fill the `answer` dictionary
 
         # Answer: same structure as partC, except for the key 'explain_kfold_vs_shuffle_split'
 
         answer = {}
-        answer["clf"] = DecisionTreeClassifier(random_state=16)
-        answer["cv"] = ShuffleSplit(n_splits=5, random_state=16)
-        answer["scores"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer["clf"], cv=answer["cv"])
-        u.print_cv_result_dict(answer["scores"])
-        answer["explain_kfold_vs_shuffle_split"] = "k-fold segments the whole dataset, using each segment as the \
+        answer["clf"] = DecisionTreeClassifier(random_state=self.seed)
+        answer["cv"] = ShuffleSplit(n_splits=5, random_state = self.seed)
+
+        scores = u.train_simple_classifier_with_cv(
+            Xtrain=X, ytrain=y, clf=answer["clf"], cv=answer["cv"]
+        )
+        answer["scores"] = {
+            "mean_fit_time": scores["test_score"].mean(),
+            "std_fit_time": scores["test_score"].std(),
+            "mean_accuracy": scores["test_score"].mean(),
+            "std_accuracy": scores["test_score"].std(),
+        }
+        answer[
+            "explain_kfold_vs_shuffle_split"
+        ] = "k-fold segments the whole dataset, using each segment as the \
             test set exactly once. It doesn't scale well with large datasets however, which is where shuffle-split \
             comes in. It randomly subsets the data by set amounts, and is more efficient for large datasets. \
             of course, the cost is that it is less comprehensive than k-fold."
@@ -190,11 +215,23 @@ class Section1:
         answer[16] = {}
 
         for k in [2, 5, 8, 16]:
-            answer[k]["clf"] = DecisionTreeClassifier(random_state=16)
-            answer[k]["cv"] = ShuffleSplit(n_splits=k, random_state=16)
-            answer[k]["scores"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer[k]["clf"], cv=answer[k]["cv"])
+            answer[k]["clf"] = DecisionTreeClassifier(random_state=self.seed)
+            answer[k]["cv"] = ShuffleSplit(n_splits=k, random_state=self.seed)
+            scores = u.train_simple_classifier_with_cv(
+                Xtrain=X, ytrain=y, clf=answer[k]["clf"], cv=answer[k]["cv"]
+            )
+            answer[k]["scores"] = {
+                "mean_fit_time": scores["test_score"].mean(),
+                "std_fit_time": scores["test_score"].std(),
+                "mean_accuracy": scores["test_score"].mean(),
+                "std_accuracy": scores["test_score"].std(),
+            }
+            answer[k]["scores"] = u.train_simple_classifier_with_cv(
+                Xtrain=X, ytrain=y, clf=answer[k]["clf"], cv=answer[k]["cv"]
+            )
             print(f"Scores for k={k}")
-            u.print_cv_result_dict({"test_score": answer[k]["scores"]["test_score"]})
+            print("I noticed that the mean and standard deviation of the scores for each k \
+                  are inversely related. As k increases, the mean decreases and the standard deviation increases.")
         # Enter your code, construct the `answer` dictionary, and return it.
         return answer
 
@@ -218,7 +255,9 @@ class Section1:
         X: NDArray[np.floating],
         y: NDArray[np.int32],
     ) -> dict[str, Any]:
-        print("Part F: Repeat part D with a Random-Forest classifier with default parameters\n")
+        print(
+            "Part F: Repeat part D with a Random-Forest classifier with default parameters\n"
+        )
 
         answer = {}
 
@@ -226,8 +265,12 @@ class Section1:
         answer["clf_RF"] = RandomForestClassifier(random_state=24)
         answer["clf_DT"] = DecisionTreeClassifier(random_state=16)
         answer["cv"] = ShuffleSplit(n_splits=5, random_state=16)
-        answer["scores_RF"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer["clf_RF"], cv=answer["cv"])
-        answer["scores_DT"] = u.train_simple_classifier_with_cv(Xtrain = X,ytrain= y,clf= answer["clf_DT"], cv=answer["cv"])
+        answer["scores_RF"] = u.train_simple_classifier_with_cv(
+            Xtrain=X, ytrain=y, clf=answer["clf_RF"], cv=answer["cv"]
+        )
+        answer["scores_DT"] = u.train_simple_classifier_with_cv(
+            Xtrain=X, ytrain=y, clf=answer["clf_DT"], cv=answer["cv"]
+        )
         u.print_cv_result_dict(answer["scores_RF"])
         u.print_cv_result_dict(answer["scores_DT"])
         answer["model_highest_accuracy"] = "RF"
