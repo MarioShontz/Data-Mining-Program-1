@@ -91,11 +91,14 @@ class Section1:
         X, y, Xtest, ytest = u.prepare_data()
         Xtrain, ytrain = u.filter_out_7_9s(X, y)
         Xtest, ytest = u.filter_out_7_9s(Xtest, ytest)
+
         print(Xtrain.shape, ytrain.shape, Xtest.shape, ytest.shape)
         Xtrain = nu.scale_data(Xtrain)
         Xtest = nu.scale_data(Xtest)
+
         Xtrain = Xtrain.astype(float)
         Xtest = Xtest.astype(float)
+        
         ytrain = ytrain.astype(int)
         ytest = ytest.astype(int)
 

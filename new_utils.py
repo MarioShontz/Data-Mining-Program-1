@@ -15,6 +15,4 @@ def scale_data(data):
     """
     ensure every element is a float and normalize points to be between 0 and 1
     """
-    data = data.astype(float)
-    data = data / 255.0
-    return data
+    return (data - data.min()) / (data.max() - data.min())
