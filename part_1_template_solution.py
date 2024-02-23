@@ -267,13 +267,13 @@ class Section1:
         cv = ShuffleSplit(n_splits=5, random_state=self.seed)
 
         # Training and evaluating the Random Forest classifier
-        scores_RF = cross_validate(clf_RF, X, y, cv=cv, return_train_score=False)
+        scores_RF = u.train_simple_classifier_with_cv(Xtrain=X, ytrain=y, clf=clf_RF, cv=cv)
         mean_accuracy_RF = scores_RF['test_score'].mean()
         std_accuracy_RF = scores_RF['test_score'].std()
         mean_fit_time_RF = scores_RF['fit_time'].mean()
 
         # Training and evaluating the Decision Tree classifier
-        scores_DT = cross_validate(clf_DT, X, y, cv=cv, return_train_score=False)
+        scores_DT = u.train_simple_classifier_with_cv(Xtrain=X, ytrain=y, clf=clf_DT, cv=cv)
         mean_accuracy_DT = scores_DT['test_score'].mean()
         std_accuracy_DT = scores_DT['test_score'].std()
         mean_fit_time_DT = scores_DT['fit_time'].mean()

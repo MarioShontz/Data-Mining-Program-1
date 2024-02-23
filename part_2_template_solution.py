@@ -1,10 +1,19 @@
 # Add your imports here.
 # Note: only sklearn, numpy, utils and new_utils are allowed.
+from sklearn.model_selection import (
+    ShuffleSplit,
+    cross_validate,
+    KFold,
+)
 
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
 import numpy as np
 from numpy.typing import NDArray
 from typing import Any
 
+import utils as u
+import new_utils as nu
 # ======================================================================
 
 # I could make Section 2 a subclass of Section 1, which would facilitate code reuse.
@@ -51,28 +60,35 @@ class Section2:
         NDArray[np.floating],
         NDArray[np.int32],
     ]:
-        answer = {}
-        # Enter your code and fill the `answer`` dictionary
+        print("Part A: Analyze the full MNIST dataset for multi-class classification\n")
 
-        # `answer` is a dictionary with the following keys:
-        # - nb_classes_train: number of classes in the training set
-        # - nb_classes_test: number of classes in the testing set
-        # - class_count_train: number of elements in each class in the training set
-        # - class_count_test: number of elements in each class in the testing set
-        # - length_Xtrain: number of elements in the training set
-        # - length_Xtest: number of elements in the testing set
-        # - length_ytrain: number of labels in the training set
-        # - length_ytest: number of labels in the testing set
-        # - max_Xtrain: maximum value in the training set
-        # - max_Xtest: maximum value in the testing set
+        # Load and prepare the dataset to include all classes (0-9)
+        X, y, Xtest, ytest = u.prepare_data()
+        
+        # Scale the data to have values between 0 and 1
+        Xtrain = nu.scale_data(X)
+        Xtest = nu.scale_data(Xtest)
 
-        # return values:
-        # Xtrain, ytrain, Xtest, ytest: the data used to fill the `answer`` dictionary
+        # Compute the number of elements in each class for both the training and test sets
+        classes_train, class_count_train = np.unique(y, return_counts=True)
+        classes_test, class_count_test = np.unique(ytest, return_counts=True)
 
-        Xtrain = Xtest = np.zeros([1, 1], dtype="float")
-        ytrain = ytest = np.zeros([1], dtype="int")
+        answer = {
+            "nb_classes_train": len(classes_train),
+            "nb_classes_test": len(classes_test),
+            "class_count_train": class_count_train,
+            "class_count_test": class_count_test,
+            "length_Xtrain": len(Xtrain),
+            "length_Xtest": len(Xtest),
+            "length_ytrain": len(y),
+            "length_ytest": len(ytest),
+            "max_Xtrain": np.max(Xtrain),
+            "max_Xtest": np.max(Xtest),
+        }
 
-        return answer, Xtrain, ytrain, Xtest, ytest
+        print(f"{answer=}")
+        return answer, Xtrain, y, Xtest, ytest
+
 
     """
     B.  Repeat part 1.C, 1.D, and 1.F, for the multiclass problem. 
@@ -99,24 +115,75 @@ class Section2:
         ntrain_list: list[int] = [],
         ntest_list: list[int] = [],
     ) -> dict[int, dict[str, Any]]:
-        """ """
-        # Enter your code and fill the `answer`` dictionary
+        print("Part B: Multi-class classification with Logistic Regression and various training/testing sizes\n")
+        
         answer = {}
+        
+        for ntrain, ntest in zip(ntrain_list, ntest_list):
+            Xtrain_sub = X[:ntrain, :]
+            ytrain_sub = y[:ntrain]
+            Xtest_sub = Xtest[:ntest, :]
+            ytest_sub = ytest[:ntest]
+            
+            print(f"Training with {ntrain} samples and testing with {ntest} samples.")
 
-        """
-        `answer` is a dictionary with the following keys:
-           - 1000, 5000, 10000: each key is the number of training samples
+            # Repeat part C for multi-class classification
+            print("==> Repeating part C (k-fold cross-validation)")
+            cv = KFold(n_splits=5, shuffle=True, random_state=self.seed)
+            clf_C = DecisionTreeClassifier(random_state=self.seed)
+            scores_C = u.train_simple_classifier_with_cv(Xtrain=Xtrain_sub, ytrain=ytrain_sub, clf=clf_C, cv=cv)
+            scores_C = {
+                "mean_fit_time": scores_C['fit_time'].mean(),
+                "std_fit_time": scores_C['fit_time'].std(),
+                "mean_accuracy": scores_C['test_score'].mean(),
+                "std_accuracy": scores_C['test_score'].std(),
+            }
+            
+            # Repeat part D for multi-class classification
+            print("==> Repeating part D (Shuffle-Split cross-validation)")
+            cv_D = ShuffleSplit(n_splits=5, random_state=self.seed)
+            scores_D = u.train_simple_classifier_with_cv(Xtrain=Xtrain_sub, ytrain=ytrain_sub, clf=clf_C, cv=cv_D)
+            scores_D = {
+                "mean_fit_time": scores_D['fit_time'].mean(),
+                "std_fit_time": scores_D['fit_time'].std(),
+                "mean_accuracy": scores_D['test_score'].mean(),
+                "std_accuracy": scores_D['test_score'].std(),
+            }
+            
+            # Repeat part F for multi-class classification using Logistic Regression
+            print("==> Repeating part F (Logistic Regression with 300 iterations)")
+            clf_F = LogisticRegression(random_state=self.seed, max_iter=300, multi_class='multinomial')
 
-           answer[k] is itself a dictionary with the following keys
-            - "partC": dictionary returned by partC section 1
-            - "partD": dictionary returned by partD section 1
-            - "partF": dictionary returned by partF section 1
-            - "ntrain": number of training samples
-            - "ntest": number of test samples
-            - "class_count_train": number of elements in each class in
-                               the training set (a list, not a numpy array)
-            - "class_count_test": number of elements in each class in
-                               the training set (a list, not a numpy array)
-        """
+            # Cross-validate to get mean and std accuracy across folds
+            scores_F = u.train_simple_classifier_with_cv(Xtrain=Xtrain_sub, ytrain=ytrain_sub, clf=clf_F, cv=ShuffleSplit(n_splits=5, random_state=self.seed))
+            class_count_train = np.unique(ytrain_sub, return_counts=True)[1]
+            class_count_test = np.unique(ytest_sub, return_counts=True)[1]
 
+            # Update the answer dictionary for this ntrain-ntest pair
+            answer[ntrain] = {
+                "partC": {
+                    "scores": scores_C, 
+                    "clf": clf_C, 
+                    "cv": cv
+                },
+                "partD": {
+                    "scores": scores_D, 
+                    "clf": clf_C, 
+                    "cv": cv_D
+                },
+                "partF": {
+                    "scores": {
+                        "mean_accuracy": scores_F['test_score'].mean(),
+                        "std_accuracy": scores_F['test_score'].std(),
+                        "mean_fit_time": scores_F['fit_time'].mean(),
+                    },
+                    "clf": clf_F,
+                    "cv": ShuffleSplit(n_splits=5, random_state=self.seed)
+                },
+                "ntrain": ntrain,
+                "ntest": ntest,
+                "class_count_train": class_count_train.tolist(),
+                "class_count_test": class_count_test.tolist()
+            }
+            print(f"{answer=}")
         return answer
