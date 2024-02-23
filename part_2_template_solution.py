@@ -190,12 +190,12 @@ class Section2:
                 "class_count_train": class_count_train.tolist(),
                 "class_count_test": class_count_test.tolist(),
             }
-            print(f"{answer=}")
-            print(
-                "The logistic regression model performs consistently better than the decision tree model."
-            )
-            print(
-                "The accuracy is higher for the training set than for the testing set."
-            )
-            print("The accuracy increases with ntrain, but with diminishing returns.")
+        print(f"{answer=}")
+        print(
+            "The logistic regression model performs consistently better than the decision tree model."
+        )
+        print(
+            "The accuracy is higher for the training set than for the testing set."
+        )
+        print("The accuracy increases with ntrain, but with diminishing returns.")
         return answer
