@@ -2,6 +2,15 @@ import numpy as np
 from numpy.typing import NDArray
 from typing import Any
 
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import top_k_accuracy_score
+from sklearn.svm import SVC
+from sklearn.model_selection import cross_validate, StratifiedKFold
+from sklearn.metrics import confusion_matrix, make_scorer, accuracy_score, recall_score, precision_score, f1_score
+
+import utils as u
+import new_utils as nu
+
 """
    In the first two set of tasks, we will narrowly focus on accuracy - 
    what fraction of our predictions were correct. However, there are several 
@@ -39,8 +48,8 @@ class Section3:
         print(f"{np.sum(counts)=}")
 
         return {
-            "class_counts": {},  # Replace with actual class counts
-            "num_classes": 0,  # Replace with the actual number of classes
+            "class_counts": counts,  # Replace with actual class counts
+            "num_classes": uniq,  # Replace with the actual number of classes
         }
 
     # --------------------------------------------------------------------------
@@ -57,37 +66,32 @@ class Section3:
         ytrain: NDArray[np.int32],
         Xtest: NDArray[np.floating],
         ytest: NDArray[np.int32],
-    ) -> tuple[
-        dict[Any, Any],
-        NDArray[np.floating],
-        NDArray[np.int32],
-        NDArray[np.floating],
-        NDArray[np.int32],
-    ]:
-        """ """
-        # Enter code and return the `answer`` dictionary
-
+    ):
         answer = {}
+        clf = RandomForestClassifier(random_state=self.seed)
+        clf.fit(Xtrain, ytrain)
 
-        """
-        # `answer` is a dictionary with the following keys:
-        - integers for each topk (1,2,3,4,5)
-        - "clf" : the classifier
-        - "plot_k_vs_score_train" : the plot of k vs. score for the training data, 
-                                    a list of tuples (k, score) for k=1,2,3,4,5
-        - "plot_k_vs_score_test" : the plot of k vs. score for the testing data
-                                    a list of tuples (k, score) for k=1,2,3,4,5
+        ytrain_pred = clf.predict_proba(Xtrain)
+        ytest_pred = clf.predict_proba(Xtest)
 
-        # Comment on the rate of accuracy change for testing data
-        - "text_rate_accuracy_change" : the rate of accuracy change for the testing data
+        topk = [k for k in range(1, 6)]
+        plot_scores_train = []
+        plot_scores_test = []
+        for k in topk:
+            score_train = top_k_accuracy_score(ytrain, ytrain_pred, k=k, labels=np.arange(clf.n_classes_))
+            score_test = top_k_accuracy_score(ytest, ytest_pred, k=k, labels=np.arange(clf.n_classes_))
+            plot_scores_train.append((k, score_train))
+            plot_scores_test.append((k, score_test))
 
-        # Comment on the rate of accuracy change
-        - "text_is_topk_useful_and_why" : provide a description as a string
+        answer["plot_k_vs_score_train"] = plot_scores_train
+        answer["plot_k_vs_score_test"] = plot_scores_test
+        print(f"{plot_scores_train=}")
+        print(f"{plot_scores_test=}")
 
-        answer[k] (k=1,2,3,4,5) is a dictionary with the following keys: 
-        - "score_train" : the topk accuracy score for the training set
-        - "score_test" : the topk accuracy score for the testing set
-        """
+        # Additional comments on the rate of accuracy change and usefulness of the metric
+        answer["text_rate_accuracy_change"] = "The rate of accuracy change indicates how additional considerations of top classes (k) impact model performance. A steep initial increase may flatten, indicating early top classes' dominance."
+        answer["text_is_topk_useful_and_why"] = "Top-k accuracy is particularly useful for datasets with multiple classes or when the distinction between some classes is not clear-cut. It provides insight beyond simple accuracy, especially in multi-class scenarios where the correct class might not be the model's top prediction but within its top 'k' predictions."
+
 
         return answer, Xtrain, ytrain, Xtest, ytest
 
@@ -109,11 +113,36 @@ class Section3:
         NDArray[np.floating],
         NDArray[np.int32],
     ]:
-        """"""
-        # Enter your code and fill the `answer` dictionary
-        answer = {}
+        # Ensure reproducibility
+        np.random.seed(self.seed)
 
-        # Answer is a dictionary with the same keys as part 1.B
+        # Filtering to keep only the digits 7 and 9
+        is_seven_or_nine = (y == 7) | (y == 9)
+        X = X[is_seven_or_nine]
+        y = y[is_seven_or_nine]
+
+        is_seven_or_nine_test = (ytest == 7) | (ytest == 9)
+        Xtest = Xtest[is_seven_or_nine_test]
+        ytest = ytest[is_seven_or_nine_test]
+
+        # Identify and remove 90% of 9s
+        indices_of_nines = np.where(y == 9)[0]
+        nines_to_remove = np.random.choice(indices_of_nines, size=int(0.9 * len(indices_of_nines)), replace=False)
+        
+        X = np.delete(X, nines_to_remove, axis=0)
+        y = np.delete(y, nines_to_remove)
+
+        # Convert labels: 7 to 0, 9 to 1
+        y = np.where(y == 7, 0, 1)
+        ytest = np.where(ytest == 7, 0, 1)
+
+        answer = {
+            'X_balanced': X,
+            'y_balanced': y,
+            'Xtest_filtered': Xtest,
+            'ytest_filtered': ytest,
+            'removed_nines': len(nines_to_remove)
+        }
 
         return answer, X, y, Xtest, ytest
 
@@ -134,31 +163,41 @@ class Section3:
         Xtest: NDArray[np.floating],
         ytest: NDArray[np.int32],
     ) -> dict[str, Any]:
-        """"""
-
-        # Enter your code and fill the `answer` dictionary
-        answer = {}
-
-        """
-        Answer is a dictionary with the following keys: 
-        - "scores" : a dictionary with the mean/std of the F1 score, precision, and recall
-        - "cv" : the cross-validation strategy
-        - "clf" : the classifier
-        - "is_precision_higher_than_recall" : a boolean
-        - "explain_is_precision_higher_than_recall" : a string
-        - "confusion_matrix_train" : the confusion matrix for the training set
-        - "confusion_matrix_test" : the confusion matrix for the testing set
+        print("Evaluating SVC performance with Stratified K-Fold cross-validation\n")
         
-        answer["scores"] is dictionary with the following keys, generated from the cross-validator:
-        - "mean_accuracy" : the mean accuracy
-        - "mean_recall" : the mean recall
-        - "mean_precision" : the mean precision
-        - "mean_f1" : the mean f1
-        - "std_accuracy" : the std accuracy
-        - "std_recall" : the std recall
-        - "std_precision" : the std precision
-        - "std_f1" : the std f1
-        """
+        answer = {}
+        svc_classifier = SVC(random_state=self.seed)
+        stratified_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=self.seed)
+
+        scoring_metrics = {
+            'accuracy': make_scorer(accuracy_score),
+            'recall': make_scorer(recall_score, average='macro'),
+            'precision': make_scorer(precision_score, average='macro'),
+            'f1': make_scorer(f1_score, average='macro'),
+        }
+
+        cv_results = cross_validate(svc_classifier, X, y, cv=stratified_cv, scoring=scoring_metrics)
+
+        # Extracting and organizing the results
+        metrics_summary = {metric: {'mean': np.mean(cv_results[f'test_{metric}']), 'std': np.std(cv_results[f'test_{metric}'])}
+                           for metric in scoring_metrics.keys()}
+
+        svc_classifier.fit(X, y)
+        train_confusion_matrix = confusion_matrix(y, svc_classifier.predict(X))
+        test_confusion_matrix = confusion_matrix(ytest, svc_classifier.predict(Xtest))
+
+        # Updating the answer dictionary
+        answer['scores'] = metrics_summary
+        answer['cv'] = stratified_cv
+        answer['clf'] = svc_classifier
+        answer['confusion_matrix_train'] = train_confusion_matrix
+        answer['confusion_matrix_test'] = test_confusion_matrix
+
+        # Additional insights
+        precision_higher_than_recall = metrics_summary['precision']['mean'] > metrics_summary['recall']['mean']
+        answer['is_precision_higher_than_recall'] = precision_higher_than_recall
+        explanation = "Precision is higher than recall, indicating a lower false positive rate relative to the false negative rate." if precision_higher_than_recall else "Recall is higher, indicating a prioritization of minimizing false negatives over false positives."
+        answer['explain_is_precision_higher_than_recall'] = explanation
 
         return answer
 
