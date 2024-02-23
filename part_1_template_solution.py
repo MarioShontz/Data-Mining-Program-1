@@ -230,7 +230,7 @@ class Section1:
                 Xtrain=X, ytrain=y, clf=answer[k]["clf"], cv=answer[k]["cv"]
             )
             print(f"Scores for k={k}")
-            print("I noticed that the mean and standard deviation of the scores for each k \
+        print("I noticed that the mean and standard deviation of the scores for each k \
                   are inversely related. As k increases, the mean decreases and the standard deviation increases.")
         # Enter your code, construct the `answer` dictionary, and return it.
         return answer
@@ -255,39 +255,51 @@ class Section1:
         X: NDArray[np.floating],
         y: NDArray[np.int32],
     ) -> dict[str, Any]:
-        print(
-            "Part F: Repeat part D with a Random-Forest classifier with default parameters\n"
-        )
+        print("Part F: Repeat part D with a Random-Forest classifier with default parameters\n")
 
         answer = {}
 
-        # Enter your code, construct the `answer` dictionary, and return it.
-        answer["clf_RF"] = RandomForestClassifier(random_state=24)
-        answer["clf_DT"] = DecisionTreeClassifier(random_state=16)
-        answer["cv"] = ShuffleSplit(n_splits=5, random_state=16)
-        answer["scores_RF"] = u.train_simple_classifier_with_cv(
-            Xtrain=X, ytrain=y, clf=answer["clf_RF"], cv=answer["cv"]
-        )
-        answer["scores_DT"] = u.train_simple_classifier_with_cv(
-            Xtrain=X, ytrain=y, clf=answer["clf_DT"], cv=answer["cv"]
-        )
-        u.print_cv_result_dict(answer["scores_RF"])
-        u.print_cv_result_dict(answer["scores_DT"])
-        answer["model_highest_accuracy"] = "RF"
-        answer["model_lowest_variance"] = "DT"
-        answer["model_fastest"] = "DT"
+        # Random Forest classifier with default parameters
+        clf_RF = RandomForestClassifier(random_state=self.seed)
+        # Decision Tree classifier for comparison
+        clf_DT = DecisionTreeClassifier(random_state=self.seed)
+        # Use ShuffleSplit for cross-validation to ensure identical splits for both classifiers
+        cv = ShuffleSplit(n_splits=5, random_state=self.seed)
 
-        """
-         Answer is a dictionary with the following keys: 
-            "clf_RF",  # Random Forest class instance
-            "clf_DT",  # Decision Tree class instance
-            "cv",  # Cross validator class instance
-            "scores_RF",  Dictionary with keys: "mean_fit_time", "std_fit_time", "mean_accuracy", "std_accuracy"
-            "scores_DT",  Dictionary with keys: "mean_fit_time", "std_fit_time", "mean_accuracy", "std_accuracy"
-            "model_highest_accuracy" (string)
-            "model_lowest_variance" (float)
-            "model_fastest" (float)
-        """
+        # Training and evaluating the Random Forest classifier
+        scores_RF = cross_validate(clf_RF, X, y, cv=cv, return_train_score=False)
+        mean_accuracy_RF = scores_RF['test_score'].mean()
+        std_accuracy_RF = scores_RF['test_score'].std()
+        mean_fit_time_RF = scores_RF['fit_time'].mean()
+
+        # Training and evaluating the Decision Tree classifier
+        scores_DT = cross_validate(clf_DT, X, y, cv=cv, return_train_score=False)
+        mean_accuracy_DT = scores_DT['test_score'].mean()
+        std_accuracy_DT = scores_DT['test_score'].std()
+        mean_fit_time_DT = scores_DT['fit_time'].mean()
+
+        # Comparing the performance
+        highest_accuracy_model = "random-forest" if mean_accuracy_RF > mean_accuracy_DT else "decision-tree"
+        lowest_variance_model = "random-forest" if std_accuracy_RF**2 < std_accuracy_DT**2 else "decision-tree"
+        fastest_model = "random-forest" if mean_fit_time_RF < mean_fit_time_DT else "decision-tree"
+
+        # Updating the answer dictionary with the results
+        answer["clf_RF"] = clf_RF
+        answer["clf_DT"] = clf_DT
+        answer["cv"] = cv
+        answer["scores_RF"] = {
+            "mean_accuracy": mean_accuracy_RF,
+            "std_accuracy": std_accuracy_RF,
+            "mean_fit_time": mean_fit_time_RF,
+        }
+        answer["scores_DT"] = {
+            "mean_accuracy": mean_accuracy_DT,
+            "std_accuracy": std_accuracy_DT,
+            "mean_fit_time": mean_fit_time_DT,
+        }
+        answer["model_highest_accuracy"] = highest_accuracy_model
+        answer["model_lowest_variance"] = lowest_variance_model
+        answer["model_fastest"] = fastest_model
 
         return answer
 
@@ -315,66 +327,61 @@ class Section1:
         Xtest: NDArray[np.floating],
         ytest: NDArray[np.int32],
     ) -> dict[str, Any]:
-        """
-        Perform classification using the given classifier and cross validator.
-
-        Parameters:
-        - clf: The classifier instance to use for classification.
-        - cv: The cross validator instance to use for cross validation.
-        - X: The test data.
-        - y: The test labels.
-        - n_splits: The number of splits for cross validation. Default is 5.
-
-        Returns:
-        - y_pred: The predicted labels for the test data.
-
-        Note:
-        This function is not fully implemented yet.
-        """
         print("Part G: Modify hyperparameters and train on all training data\n")
 
-        # refit=True: fit with the best parameters when complete
-        # A test should look at best_index_, best_score_ and best_params_
-        """
-        List of parameters you are allowed to vary. Choose among them.
-         1) criterion,
-         2) max_depth,
-         3) min_samples_split, 
-         4) min_samples_leaf,
-         5) max_features 
-         5) n_estimators
-        """
+        # Setup the Random Forest classifier with default parameters for comparison
+        clf_default = RandomForestClassifier(random_state=self.seed)
+        clf_default.fit(X, y)
+        
+        # Setup the parameter grid for hyperparameter tuning
+        parameters = {
+            "criterion": ["gini", "entropy"],
+            "max_depth": [2,10, 20],
+            "n_estimators": [20, 50, 100]
+        }
+        
+        # Initialize GridSearchCV with RandomForestClassifier and the defined parameters
+        grid_search = GridSearchCV(
+            RandomForestClassifier(random_state=self.seed),
+            param_grid=parameters,
+            cv=ShuffleSplit(n_splits=5, random_state=self.seed),
+            scoring='accuracy',
+            refit=True
+        )
+        
+        # Perform the grid search on the training data
+        grid_search.fit(X, y)
+        
+        # Extract the best estimator and its performance metrics
+        best_estimator = grid_search.best_estimator_
+        best_params = grid_search.best_params_
+        best_score_cv = grid_search.best_score_
+        
+        # Train the best estimator on the full training data and evaluate on the test set
+        best_estimator.fit(X, y)
+        accuracy_train_best = best_estimator.score(X, y)
+        accuracy_test_best = best_estimator.score(Xtest, ytest)
+        
+        # Compare with the default classifier
+        accuracy_train_default = clf_default.score(X, y)
+        accuracy_test_default = clf_default.score(Xtest, ytest)
+        
+        answer = {
+            "clf_default": clf_default,
+            "best_estimator": best_estimator,
+            "grid_search": grid_search,
+            "default_parameters": clf_default.get_params(),
+            "best_parameters": best_params,
+            "mean_accuracy_cv": best_score_cv,
+            "accuracy_train_default": accuracy_train_default,
+            "accuracy_train_best": accuracy_train_best,
+            "accuracy_test_default": accuracy_test_default,
+            "accuracy_test_best": accuracy_test_best,
+        }
 
-        answer = {}
-
-        # Enter your code, construct the `answer` dictionary, and return it.
-
-        """
-           `answer`` is a dictionary with the following keys: 
-            
-            "clf", base estimator (classifier model) class instance
-            "default_parameters",  dictionary with default parameters 
-                                   of the base estimator
-            "best_estimator",  classifier class instance with the best
-                               parameters (read documentation)
-            "grid_search",  class instance of GridSearchCV, 
-                            used for hyperparameter search
-            "mean_accuracy_cv",  mean accuracy score from cross 
-                                 validation (which is used by GridSearchCV)
-            "confusion_matrix_train_orig", confusion matrix of training 
-                                           data with initial estimator 
-                                (rows: true values, cols: predicted values)
-            "confusion_matrix_train_best", confusion matrix of training data 
-                                           with best estimator
-            "confusion_matrix_test_orig", confusion matrix of test data
-                                          with initial estimator
-            "confusion_matrix_test_best", confusion matrix of test data
-                                            with best estimator
-            "accuracy_orig_full_training", accuracy computed from `confusion_matrix_train_orig'
-            "accuracy_best_full_training"
-            "accuracy_orig_full_testing"
-            "accuracy_best_full_testing"
-               
-        """
-
+        # Provide insights into the performance
+        print(f"Default training accuracy: {accuracy_train_default:.4f}, Default test accuracy: {accuracy_test_default:.4f}")
+        print(f"Optimized training accuracy: {accuracy_train_best:.4f}, Optimized test accuracy: {accuracy_test_best:.4f}")
+        # The mean accuracy on the training set with grid search
+        # is higher than on the default parameters, suggesting better generalization
         return answer
