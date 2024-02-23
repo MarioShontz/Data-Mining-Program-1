@@ -14,6 +14,7 @@ from typing import Any
 
 import utils as u
 import new_utils as nu
+
 # ======================================================================
 
 # I could make Section 2 a subclass of Section 1, which would facilitate code reuse.
@@ -64,7 +65,7 @@ class Section2:
 
         # Load and prepare the dataset to include all classes (0-9)
         X, y, Xtest, ytest = u.prepare_data()
-        
+
         # Scale the data to have values between 0 and 1
         Xtrain = nu.scale_data(X)
         Xtest = nu.scale_data(Xtest)
@@ -88,7 +89,6 @@ class Section2:
 
         print(f"{answer=}")
         return answer, Xtrain, y, Xtest, ytest
-
 
     """
     B.  Repeat part 1.C, 1.D, and 1.F, for the multiclass problem. 
@@ -115,75 +115,87 @@ class Section2:
         ntrain_list: list[int] = [],
         ntest_list: list[int] = [],
     ) -> dict[int, dict[str, Any]]:
-        print("Part B: Multi-class classification with Logistic Regression and various training/testing sizes\n")
-        
+        print(
+            "Part B: Multi-class classification with Logistic Regression and various training/testing sizes\n"
+        )
+
         answer = {}
-        
+
         for ntrain, ntest in zip(ntrain_list, ntest_list):
             Xtrain_sub = X[:ntrain, :]
             ytrain_sub = y[:ntrain]
             Xtest_sub = Xtest[:ntest, :]
             ytest_sub = ytest[:ntest]
-            
+
             print(f"Training with {ntrain} samples and testing with {ntest} samples.")
 
             # Repeat part C for multi-class classification
             print("==> Repeating part C (k-fold cross-validation)")
             cv = KFold(n_splits=5, shuffle=True, random_state=self.seed)
             clf_C = DecisionTreeClassifier(random_state=self.seed)
-            scores_C = u.train_simple_classifier_with_cv(Xtrain=Xtrain_sub, ytrain=ytrain_sub, clf=clf_C, cv=cv)
+            scores_C = u.train_simple_classifier_with_cv(
+                Xtrain=Xtrain_sub, ytrain=ytrain_sub, clf=clf_C, cv=cv
+            )
             scores_C = {
-                "mean_fit_time": scores_C['fit_time'].mean(),
-                "std_fit_time": scores_C['fit_time'].std(),
-                "mean_accuracy": scores_C['test_score'].mean(),
-                "std_accuracy": scores_C['test_score'].std(),
+                "mean_fit_time": scores_C["fit_time"].mean(),
+                "std_fit_time": scores_C["fit_time"].std(),
+                "mean_accuracy": scores_C["test_score"].mean(),
+                "std_accuracy": scores_C["test_score"].std(),
             }
-            
+
             # Repeat part D for multi-class classification
             print("==> Repeating part D (Shuffle-Split cross-validation)")
             cv_D = ShuffleSplit(n_splits=5, random_state=self.seed)
-            scores_D = u.train_simple_classifier_with_cv(Xtrain=Xtrain_sub, ytrain=ytrain_sub, clf=clf_C, cv=cv_D)
+            scores_D = u.train_simple_classifier_with_cv(
+                Xtrain=Xtrain_sub, ytrain=ytrain_sub, clf=clf_C, cv=cv_D
+            )
             scores_D = {
-                "mean_fit_time": scores_D['fit_time'].mean(),
-                "std_fit_time": scores_D['fit_time'].std(),
-                "mean_accuracy": scores_D['test_score'].mean(),
-                "std_accuracy": scores_D['test_score'].std(),
+                "mean_fit_time": scores_D["fit_time"].mean(),
+                "std_fit_time": scores_D["fit_time"].std(),
+                "mean_accuracy": scores_D["test_score"].mean(),
+                "std_accuracy": scores_D["test_score"].std(),
             }
-            
+
             # Repeat part F for multi-class classification using Logistic Regression
             print("==> Repeating part F (Logistic Regression with 300 iterations)")
-            clf_F = LogisticRegression(random_state=self.seed, max_iter=300, multi_class='multinomial')
+            clf_F = LogisticRegression(
+                random_state=self.seed, max_iter=300, multi_class="multinomial"
+            )
 
             # Cross-validate to get mean and std accuracy across folds
-            scores_F = u.train_simple_classifier_with_cv(Xtrain=Xtrain_sub, ytrain=ytrain_sub, clf=clf_F, cv=ShuffleSplit(n_splits=5, random_state=self.seed))
+            scores_F = u.train_simple_classifier_with_cv(
+                Xtrain=Xtrain_sub,
+                ytrain=ytrain_sub,
+                clf=clf_F,
+                cv=ShuffleSplit(n_splits=5, random_state=self.seed),
+            )
             class_count_train = np.unique(ytrain_sub, return_counts=True)[1]
             class_count_test = np.unique(ytest_sub, return_counts=True)[1]
 
             # Update the answer dictionary for this ntrain-ntest pair
             answer[ntrain] = {
-                "partC": {
-                    "scores": scores_C, 
-                    "clf": clf_C, 
-                    "cv": cv
-                },
-                "partD": {
-                    "scores": scores_D, 
-                    "clf": clf_C, 
-                    "cv": cv_D
-                },
+                "partC": {"scores": scores_C, "clf": clf_C, "cv": cv},
+                "partD": {"scores": scores_D, "clf": clf_C, "cv": cv_D},
                 "partF": {
                     "scores": {
-                        "mean_accuracy": scores_F['test_score'].mean(),
-                        "std_accuracy": scores_F['test_score'].std(),
-                        "mean_fit_time": scores_F['fit_time'].mean(),
+                        "mean_accuracy": scores_F["test_score"].mean(),
+                        "std_accuracy": scores_F["test_score"].std(),
+                        "mean_fit_time": scores_F["fit_time"].mean(),
                     },
                     "clf": clf_F,
-                    "cv": ShuffleSplit(n_splits=5, random_state=self.seed)
+                    "cv": ShuffleSplit(n_splits=5, random_state=self.seed),
                 },
                 "ntrain": ntrain,
                 "ntest": ntest,
                 "class_count_train": class_count_train.tolist(),
-                "class_count_test": class_count_test.tolist()
+                "class_count_test": class_count_test.tolist(),
             }
             print(f"{answer=}")
+            print(
+                "The logistic regression model performs consistently better than the decision tree model."
+            )
+            print(
+                "The accuracy is higher for the training set than for the testing set."
+            )
+            print("The accuracy increases with ntrain, but with diminishing returns.")
         return answer

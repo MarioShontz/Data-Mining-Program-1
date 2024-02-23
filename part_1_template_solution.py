@@ -172,7 +172,7 @@ class Section1:
 
         answer = {}
         answer["clf"] = DecisionTreeClassifier(random_state=self.seed)
-        answer["cv"] = ShuffleSplit(n_splits=5, random_state = self.seed)
+        answer["cv"] = ShuffleSplit(n_splits=5, random_state=self.seed)
 
         scores = u.train_simple_classifier_with_cv(
             Xtrain=X, ytrain=y, clf=answer["clf"], cv=answer["cv"]
@@ -230,8 +230,10 @@ class Section1:
                 Xtrain=X, ytrain=y, clf=answer[k]["clf"], cv=answer[k]["cv"]
             )
             print(f"Scores for k={k}")
-        print("I noticed that the mean and standard deviation of the scores for each k \
-                  are inversely related. As k increases, the mean decreases and the standard deviation increases.")
+        print(
+            "I noticed that the mean and standard deviation of the scores for each k \
+                  are inversely related. As k increases, the mean decreases and the standard deviation increases."
+        )
         # Enter your code, construct the `answer` dictionary, and return it.
         return answer
 
@@ -255,7 +257,9 @@ class Section1:
         X: NDArray[np.floating],
         y: NDArray[np.int32],
     ) -> dict[str, Any]:
-        print("Part F: Repeat part D with a Random-Forest classifier with default parameters\n")
+        print(
+            "Part F: Repeat part D with a Random-Forest classifier with default parameters\n"
+        )
 
         answer = {}
 
@@ -267,21 +271,33 @@ class Section1:
         cv = ShuffleSplit(n_splits=5, random_state=self.seed)
 
         # Training and evaluating the Random Forest classifier
-        scores_RF = u.train_simple_classifier_with_cv(Xtrain=X, ytrain=y, clf=clf_RF, cv=cv)
-        mean_accuracy_RF = scores_RF['test_score'].mean()
-        std_accuracy_RF = scores_RF['test_score'].std()
-        mean_fit_time_RF = scores_RF['fit_time'].mean()
+        scores_RF = u.train_simple_classifier_with_cv(
+            Xtrain=X, ytrain=y, clf=clf_RF, cv=cv
+        )
+        mean_accuracy_RF = scores_RF["test_score"].mean()
+        std_accuracy_RF = scores_RF["test_score"].std()
+        mean_fit_time_RF = scores_RF["fit_time"].mean()
 
         # Training and evaluating the Decision Tree classifier
-        scores_DT = u.train_simple_classifier_with_cv(Xtrain=X, ytrain=y, clf=clf_DT, cv=cv)
-        mean_accuracy_DT = scores_DT['test_score'].mean()
-        std_accuracy_DT = scores_DT['test_score'].std()
-        mean_fit_time_DT = scores_DT['fit_time'].mean()
+        scores_DT = u.train_simple_classifier_with_cv(
+            Xtrain=X, ytrain=y, clf=clf_DT, cv=cv
+        )
+        mean_accuracy_DT = scores_DT["test_score"].mean()
+        std_accuracy_DT = scores_DT["test_score"].std()
+        mean_fit_time_DT = scores_DT["fit_time"].mean()
 
         # Comparing the performance
-        highest_accuracy_model = "random-forest" if mean_accuracy_RF > mean_accuracy_DT else "decision-tree"
-        lowest_variance_model = "random-forest" if std_accuracy_RF**2 < std_accuracy_DT**2 else "decision-tree"
-        fastest_model = "random-forest" if mean_fit_time_RF < mean_fit_time_DT else "decision-tree"
+        highest_accuracy_model = (
+            "random-forest" if mean_accuracy_RF > mean_accuracy_DT else "decision-tree"
+        )
+        lowest_variance_model = (
+            "random-forest"
+            if std_accuracy_RF**2 < std_accuracy_DT**2
+            else "decision-tree"
+        )
+        fastest_model = (
+            "random-forest" if mean_fit_time_RF < mean_fit_time_DT else "decision-tree"
+        )
 
         # Updating the answer dictionary with the results
         answer["clf_RF"] = clf_RF
@@ -332,40 +348,40 @@ class Section1:
         # Setup the Random Forest classifier with default parameters for comparison
         clf_default = RandomForestClassifier(random_state=self.seed)
         clf_default.fit(X, y)
-        
+
         # Setup the parameter grid for hyperparameter tuning
         parameters = {
             "criterion": ["gini", "entropy"],
-            "max_depth": [2,10, 20],
-            "n_estimators": [20, 50, 100]
+            "max_depth": [2, 10, 20],
+            "n_estimators": [20, 50, 100],
         }
-        
+
         # Initialize GridSearchCV with RandomForestClassifier and the defined parameters
         grid_search = GridSearchCV(
             RandomForestClassifier(random_state=self.seed),
             param_grid=parameters,
             cv=ShuffleSplit(n_splits=5, random_state=self.seed),
-            scoring='accuracy',
-            refit=True
+            scoring="accuracy",
+            refit=True,
         )
-        
+
         # Perform the grid search on the training data
         grid_search.fit(X, y)
-        
+
         # Extract the best estimator and its performance metrics
         best_estimator = grid_search.best_estimator_
         best_params = grid_search.best_params_
         best_score_cv = grid_search.best_score_
-        
+
         # Train the best estimator on the full training data and evaluate on the test set
         best_estimator.fit(X, y)
         accuracy_train_best = best_estimator.score(X, y)
         accuracy_test_best = best_estimator.score(Xtest, ytest)
-        
+
         # Compare with the default classifier
         accuracy_train_default = clf_default.score(X, y)
         accuracy_test_default = clf_default.score(Xtest, ytest)
-        
+
         answer = {
             "clf_default": clf_default,
             "best_estimator": best_estimator,
@@ -380,8 +396,12 @@ class Section1:
         }
 
         # Provide insights into the performance
-        print(f"Default training accuracy: {accuracy_train_default:.4f}, Default test accuracy: {accuracy_test_default:.4f}")
-        print(f"Optimized training accuracy: {accuracy_train_best:.4f}, Optimized test accuracy: {accuracy_test_best:.4f}")
+        print(
+            f"Default training accuracy: {accuracy_train_default:.4f}, Default test accuracy: {accuracy_test_default:.4f}"
+        )
+        print(
+            f"Optimized training accuracy: {accuracy_train_best:.4f}, Optimized test accuracy: {accuracy_test_best:.4f}"
+        )
         # The mean accuracy on the training set with grid search
         # is higher than on the default parameters, suggesting better generalization
         return answer
