@@ -7,6 +7,7 @@ from sklearn.metrics import top_k_accuracy_score
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_validate, StratifiedKFold
 from sklearn.metrics import confusion_matrix, make_scorer, accuracy_score, recall_score, precision_score, f1_score
+from sklearn.utils.class_weight import compute_class_weight
 
 import utils as u
 import new_utils as nu
@@ -213,32 +214,41 @@ class Section3:
         Xtest: NDArray[np.floating],
         ytest: NDArray[np.int32],
     ) -> dict[str, Any]:
-        """"""
-        # Enter your code and fill the `answer` dictionary
+        print("Part D: Evaluating SVC with a weighted loss function\n")
+
         answer = {}
+        # Utilize SVC with balanced class weights
+        classifier = SVC(random_state=self.seed, class_weight='balanced')
+        cross_val_strategy = StratifiedKFold(n_splits=5, shuffle=True, random_state=self.seed)
 
-        """
-        Answer is a dictionary with the following keys: 
-        - "scores" : a dictionary with the mean/std of the F1 score, precision, and recall
-        - "cv" : the cross-validation strategy
-        - "clf" : the classifier
-        - "class_weights" : the class weights
-        - "confusion_matrix_train" : the confusion matrix for the training set
-        - "confusion_matrix_test" : the confusion matrix for the testing set
-        - "explain_purpose_of_class_weights" : explanatory string
-        - "explain_performance_difference" : explanatory string
+        # Define scoring metrics
+        scoring = ['accuracy', 'recall_macro', 'precision_macro', 'f1_macro']
+        
+        # Perform cross-validation
+        cv_results = cross_validate(classifier, X, y, cv=cross_val_strategy, scoring=scoring)
+        
+        # Calculate and print class weights
+        class_weights = compute_class_weight(class_weight='balanced', classes=np.unique(y), y=y)
+        print("Class Weights: ", dict(zip(np.unique(y), class_weights)))
+        
+        # Summarize scores
+        scores_summary = {metric: {'mean': np.mean(cv_results[f'test_{metric}']), 'std': np.std(cv_results[f'test_{metric}'])} for metric in scoring}
 
-        answer["scores"] has the following keys: 
-        - "mean_accuracy" : the mean accuracy
-        - "mean_recall" : the mean recall
-        - "mean_precision" : the mean precision
-        - "mean_f1" : the mean f1
-        - "std_accuracy" : the std accuracy
-        - "std_recall" : the std recall
-        - "std_precision" : the std precision
-        - "std_f1" : the std f1
+        # Fit the model on the entire training set
+        classifier.fit(X, y)
+        
+        # Generate confusion matrices
+        train_confusion = confusion_matrix(y, classifier.predict(X))
+        test_confusion = confusion_matrix(ytest, classifier.predict(Xtest))
 
-        Recall: The scores are based on the results of the cross-validation step
-        """
+        # Update answer dict
+        answer['scores'] = scores_summary
+        answer['cv'] = cross_val_strategy
+        answer['clf'] = classifier
+        answer['class_weights'] = dict(zip(np.unique(y), class_weights))
+        answer['confusion_matrix_train'] = train_confusion
+        answer['confusion_matrix_test'] = test_confusion
+        answer['explain_purpose_of_class_weights'] = "Balanced class weights adjust the importance of each class inversely to its frequency, aiming to improve classifier performance on imbalanced datasets."
+        answer['explain_performance_difference'] = "Utilizing class weights typically leads to a more equitable treatment of underrepresented classes, potentially enhancing recall at the expense of precision or vice versa."
 
         return answer
